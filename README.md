@@ -1,6 +1,6 @@
 # BLOCKHAUS
 
-BlockHausBlokHaus is an on-chain long term Rental platform dAPP built on starknet
+BlockHaus is an on-chain long term Rental platform dAPP built on starknet.
 
 # 🌟 Overview
 
