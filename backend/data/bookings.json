@@ -139,7 +139,27 @@
       "totalAmount": "300 USDT",
       "approvalDate": "2025-08-24T14:44:04.368Z",
       "paymentDeadline": "2025-08-31T14:44:04.368Z"
+    },
+    {
+      "id": 8,
+      "propertyId": 2,
+      "propertyTitle": "five bedroom duplex",
+      "propertyLocation": "Barnawa",
+      "propertyImage": "/uploads/5bed1_1756046545898_3k96az.jpg",
+      "ownerWalletAddress": "0x008a9aaca4683195f0a00b7f4662999da150d0d06f735de9079760c0c22268ba",
+      "renterName": "og boss",
+      "renterEmail": "dgdidams42@gmail.com",
+      "renterPhone": "08074099338",
+      "renterWalletAddress": "0x008a9aaca4683195f0a00b7f4662999da150d0d06f735de9079760c0c22268ba",
+      "requestDate": "2025-08-24T19:24:15.316Z",
+      "moveInDate": "2025-11-11",
+      "status": "approved",
+      "message": "Your booking has been approved.",
+      "rentAmount": "300 USDT",
+      "totalAmount": "300 USDT",
+      "approvalDate": "2025-08-24T19:24:36.326Z",
+      "paymentDeadline": "2025-08-31T19:24:36.326Z"
     }
   ],
-  "lastId": 7
+  "lastId": 8
 }
