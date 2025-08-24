@@ -1,0 +1,55 @@
+{
+  "listings": [
+    {
+      "id": 1,
+      "createdAt": "2025-08-23T21:41:32.471Z",
+      "title": "three bedroom bungalow",
+      "description": "a nice, minimalist design of a three bedroom bungalow with space",
+      "price": "200 USDT/month",
+      "location": "Barnawa",
+      "beds": 3,
+      "baths": 3,
+      "area": "2400",
+      "propertyType": "bungalow",
+      "city": "kaduna",
+      "rentalDuration": "yearly",
+      "image": "/uploads/Nigerian-house-plans-3-bedroom-bungalow_1755985292395_fi9822.jpg",
+      "images": [
+        "/uploads/Nigerian-house-plans-3-bedroom-bungalow_1755985292395_fi9822.jpg",
+        "/uploads/bababb_1755985292449_2p4unm.jpeg",
+        "/uploads/Untitled_1755985292451_qkl8mj.jpeg",
+        "/uploads/Untitlebsbbbad_1755985292452_1n7ma2.jpeg"
+      ],
+      "walletAddress": "0x008a9aaca4683195f0a00b7f4662999da150d0d06f735de9079760c0c22268ba",
+      "badge": "Active",
+      "type": "rent"
+    },
+    {
+      "id": 2,
+      "createdAt": "2025-08-24T14:42:26.604Z",
+      "title": "five bedroom duplex",
+      "description": "this is a five bedroom duplex with spacious rooms and a serene environment",
+      "price": "300 USDT/month",
+      "location": "Barnawa",
+      "beds": 5,
+      "baths": 5,
+      "area": "5000",
+      "propertyType": "duplex",
+      "city": "kaduna",
+      "rentalDuration": "yearly",
+      "image": "/uploads/5bed1_1756046545898_3k96az.jpg",
+      "images": [
+        "/uploads/5bed1_1756046545898_3k96az.jpg",
+        "/uploads/5bed2_1756046546220_uefu6g.jpg",
+        "/uploads/5bed3_1756046546468_5oua7c.jpg",
+        "/uploads/liv_1756046546478_fiktev.jpeg",
+        "/uploads/din_1756046546479_yaohpj.jpeg",
+        "/uploads/bed_1756046546514_t7omqo.jpeg"
+      ],
+      "walletAddress": "0x008a9aaca4683195f0a00b7f4662999da150d0d06f735de9079760c0c22268ba",
+      "badge": "Active",
+      "type": "rent"
+    }
+  ],
+  "lastId": 2
+}
