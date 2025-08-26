@@ -10,7 +10,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
-
+app.enableCors();
   // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Onchain Rental API')

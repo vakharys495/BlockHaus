@@ -1,16 +1,15 @@
-// src/modules/payment/adapters/starknet-payment.adapter.ts
+// src/common/integrations/starknet/starknet-payment.adapter.ts
 import { Injectable } from '@nestjs/common';
-import { StarknetService } from '../../common/integrations/starknet/starknet.service';
+import { StarknetService, TransactionResult } from '../../common/integrations/starknet/starknet.service';
 
 @Injectable()
 export class StarknetPaymentAdapter {
   constructor(private readonly starknetService: StarknetService) {}
 
   /**
-   * Prepares a payment transaction for frontend execution
+   * Prepares a payment transaction for a booking
    */
-  async preparePayment(propertyId: string | number, amount: number) {
-    // Ensure propertyId is a number before sending to Starknet
+  async preparePayment(propertyId: string | number, amount: number): Promise<any> {
     const numericPropertyId = Number(propertyId);
 
     if (isNaN(numericPropertyId)) {
@@ -22,39 +21,41 @@ export class StarknetPaymentAdapter {
     }
 
     try {
-      // Use the service's transaction preparation method
-      const transactionData = this.starknetService.preparePayRentTransaction(
-        numericPropertyId, 
-        amount
-      );
+      const property = await this.starknetService.getProperty(numericPropertyId);
+      if (!property) {
+        throw new Error(`Property with ID ${propertyId} not found`);
+      }
+
+      const amountUint256 = this.starknetService.numberToUint256(amount);
 
       return {
-        success: true,
-        transaction: transactionData,
         property_id: numericPropertyId,
         amount: amount,
-        prepared_at: new Date().toISOString()
+        amount_uint256: amountUint256,
+        owner_address: property.owner,
+        estimated_gas_fee: '0', // Placeholder: Implement gas estimation if needed
       };
     } catch (error) {
-      return {
-        success: false,
-        error: (error as Error).message,
-        property_id: numericPropertyId,
-        amount: amount,
-        prepared_at: new Date().toISOString()
-      };
+      throw new Error(`Failed to prepare payment: ${(error as Error).message}`);
     }
   }
 
   /**
-   * Prepares a rent payment transaction with additional validation
+   * Prepares a rent payment transaction
    */
-  async prepareRentPayment(propertyId: string | number, amount: number, additionalData?: any) {
+  async prepareRentPayment(propertyId: string | number, amount: number): Promise<any> {
+    const numericPropertyId = Number(propertyId);
+
+    if (isNaN(numericPropertyId)) {
+      throw new Error(`Invalid propertyId: ${propertyId}`);
+    }
+
+    if (amount <= 0) {
+      throw new Error(`Invalid amount: ${amount}. Amount must be greater than 0`);
+    }
+
     try {
-      // First, validate the property exists and get its details
-      const numericPropertyId = Number(propertyId);
       const property = await this.starknetService.getProperty(numericPropertyId);
-      
       if (!property) {
         throw new Error(`Property with ID ${propertyId} not found`);
       }
@@ -63,37 +64,120 @@ export class StarknetPaymentAdapter {
         throw new Error(`Property ${propertyId} is not currently rented`);
       }
 
-      // Validate the payment amount against the property's rent
-      const expectedRent = Number(property.rent_per_month);
-      if (amount !== expectedRent) {
-        console.warn(`Payment amount (${amount}) differs from expected rent (${expectedRent})`);
+      if (!property.tenant) {
+        throw new Error(`No tenant assigned to property ${propertyId}`);
       }
 
-      const result = await this.preparePayment(propertyId, amount);
-      
+      const expectedRent = Number(property.rent_per_month);
+      if (amount !== expectedRent) {
+        console.warn(
+          `⚠️ Payment amount (${amount}) differs from expected rent (${expectedRent})`,
+        );
+      }
+
+      const amountUint256 = this.starknetService.numberToUint256(amount);
+
       return {
-        ...result,
+        property_id: numericPropertyId,
+        amount: amount,
+        amount_uint256: amountUint256,
+        tenant_address: property.tenant,
+        owner_address: property.owner,
+        estimated_gas_fee: '0', // Placeholder: Implement gas estimation if needed
+      };
+    } catch (error) {
+      throw new Error(`Failed to prepare rent payment: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Executes a rent payment transaction on Starknet
+   */
+  async executePayment(propertyId: string | number, amount: number): Promise<TransactionResult> {
+    const numericPropertyId = Number(propertyId);
+
+    if (isNaN(numericPropertyId)) {
+      throw new Error(`Invalid propertyId: ${propertyId}`);
+    }
+
+    if (amount <= 0) {
+      throw new Error(`Invalid amount: ${amount}. Amount must be greater than 0`);
+    }
+
+    try {
+      const transactionResult = await this.starknetService.payRent(
+        numericPropertyId,
+        amount,
+      );
+
+      return {
+        ...transactionResult,
+        property_id: numericPropertyId,
+      };
+    } catch (error) {
+      throw new Error(`Failed to execute payment: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Executes a rent payment with validation
+   */
+  async executeRentPayment(
+    propertyId: string | number,
+    amount: number,
+    additionalData?: any,
+  ) {
+    const numericPropertyId = Number(propertyId);
+
+    try {
+      // Validate property exists
+      const property = await this.starknetService.getProperty(numericPropertyId);
+
+      if (!property) {
+        throw new Error(`Property with ID ${propertyId} not found`);
+      }
+
+      if (property.is_available) {
+        throw new Error(`Property ${propertyId} is not currently rented`);
+      }
+
+      // Validate rent matches expected
+      const expectedRent = Number(property.rent_per_month);
+      if (amount !== expectedRent) {
+        console.warn(
+          `⚠️ Payment amount (${amount}) differs from expected rent (${expectedRent})`,
+        );
+      }
+
+      const transactionResult = await this.executePayment(
+        numericPropertyId,
+        amount,
+      );
+
+      return {
+        success: true,
+        transaction: transactionResult,
         property_details: {
           owner: property.owner,
           tenant: property.tenant,
           rent_per_month: property.rent_per_month,
-          description: property.description
+          description: property.description,
         },
-        ...additionalData
+        ...additionalData,
       };
     } catch (error) {
       return {
         success: false,
         error: (error as Error).message,
-        property_id: propertyId,
-        amount: amount,
-        prepared_at: new Date().toISOString()
+        property_id: numericPropertyId,
+        amount,
+        executed_at: new Date().toISOString(),
       };
     }
   }
 
   /**
-   * Gets contract information for frontend wallet integration
+   * Gets contract information for frontend display
    */
   getContractInfo() {
     return this.starknetService.getContractInfo();
@@ -103,25 +187,28 @@ export class StarknetPaymentAdapter {
    * Validates a property exists and returns its details
    */
   async validateProperty(propertyId: string | number) {
-    try {
-      const numericPropertyId = Number(propertyId);
-      
-      if (isNaN(numericPropertyId)) {
-        throw new Error(`Invalid propertyId: ${propertyId}`);
-      }
+    const numericPropertyId = Number(propertyId);
 
+    if (isNaN(numericPropertyId)) {
+      return {
+        valid: false,
+        error: `Invalid propertyId: ${propertyId}`,
+        property_id: propertyId,
+      };
+    }
+
+    try {
       const property = await this.starknetService.getProperty(numericPropertyId);
-      
       return {
         valid: true,
-        property: property,
-        property_id: numericPropertyId
+        property,
+        property_id: numericPropertyId,
       };
     } catch (error) {
       return {
         valid: false,
         error: (error as Error).message,
-        property_id: propertyId
+        property_id: numericPropertyId,
       };
     }
   }
@@ -130,34 +217,18 @@ export class StarknetPaymentAdapter {
    * Gets the expected rent amount for a property
    */
   async getExpectedRent(propertyId: string | number) {
-    try {
-      const validation = await this.validateProperty(propertyId);
-      
-      if (!validation.valid || !validation.property) {
-        throw new Error(validation.error || 'Property not found');
-      }
+    const validation = await this.validateProperty(propertyId);
 
-      return {
-        property_id: validation.property_id,
-        rent_per_month: validation.property.rent_per_month,
-        is_available: validation.property.is_available,
-        owner: validation.property.owner,
-        tenant: validation.property.tenant
-      };
-    } catch (error) {
-      throw new Error(`Failed to get expected rent: ${error.message}`);
+    if (!validation.valid || !validation.property) {
+      throw new Error(validation.error || 'Property not found');
     }
-  }
 
-  /**
-   * Utility method to format transaction data for frontend
-   */
-  formatTransactionForFrontend(transactionData: any) {
     return {
-      contractAddress: transactionData.contractAddress,
-      functionName: transactionData.functionName,
-      calldata: transactionData.calldata,
-      // Add any additional formatting needed for your frontend wallet integration
+      property_id: validation.property_id,
+      rent_per_month: validation.property.rent_per_month,
+      is_available: validation.property.is_available,
+      owner: validation.property.owner,
+      tenant: validation.property.tenant,
     };
   }
 }
